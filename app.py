@@ -116,6 +116,268 @@ footer {
 .pct  { color:rgba(255,255,255,.55); font-size:12px; margin:7px 4px 4px; display:block; }
 
 .footer { text-align:center; color:rgba(255,255,255,.4); font-size:13px; margin-top:44px; }
+
+/* =========================================================
+   Portrait mobile layout
+   Desktop remains unchanged above this breakpoint.
+   ========================================================= */
+@media screen and (max-width: 768px) {
+
+    /* Natural vertical scrolling with no sideways overflow */
+    html,
+    body,
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    .block-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 1.25rem 1rem 2rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .hero-row {
+        gap: 10px;
+        margin-bottom: 7px;
+    }
+
+    .hero-icon {
+        font-size: 2.1rem;
+        line-height: 1;
+    }
+
+    .hero-title {
+        font-size: 2.6rem;
+        line-height: 1;
+        letter-spacing: -0.04em;
+    }
+
+    .hero-sub {
+        max-width: 330px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    /* Full-width live search */
+    [data-testid="stCustomComponentV1"],
+    [data-testid="stCustomComponentV1"] iframe {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Full-width touch-friendly button */
+    div.stButton {
+        width: 100% !important;
+    }
+
+    div.stButton > button {
+        width: 100% !important;
+        min-height: 46px !important;
+        border-radius: 10px !important;
+        font-size: 15px !important;
+        touch-action: manipulation;
+    }
+
+    .banner {
+        width: 100%;
+        height: 180px;
+        margin-top: 18px;
+        margin-bottom: 24px;
+        border-radius: 12px;
+        background-position: center;
+        box-sizing: border-box;
+    }
+
+    .banner-overlay {
+        padding: 20px;
+    }
+
+    .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+    }
+
+    .banner-title {
+        max-width: 100%;
+        margin-top: 6px;
+        font-size: 25px;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+
+    .section {
+        margin: 6px 0 16px;
+        font-size: 21px;
+        line-height: 1.25;
+    }
+
+    /* Vertical recommendation feed */
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Poster-left compact mobile card */
+    .card {
+        display: grid;
+        grid-template-columns: 105px minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto;
+        column-gap: 14px;
+        row-gap: 0;
+        align-items: start;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 10px;
+        border-radius: 12px;
+        box-sizing: border-box;
+    }
+
+    .poster,
+    .poster-ph {
+        grid-column: 1;
+        grid-row: 1 / 5;
+        width: 105px;
+        max-width: 105px;
+        aspect-ratio: 2 / 3;
+        margin: 0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .poster-ph {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+    }
+
+    .card-head {
+        grid-column: 2;
+        grid-row: 1;
+        width: 100%;
+        min-width: 0;
+        padding: 2px 0 0;
+    }
+
+    .rank {
+        font-size: 17px;
+    }
+
+    .badge {
+        flex-shrink: 0;
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+
+    .m-title {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        margin: 14px 0 12px;
+        font-size: 16px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .bar {
+        grid-column: 2;
+        grid-row: 3;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        align-self: end;
+    }
+
+    .pct {
+        grid-column: 2;
+        grid-row: 4;
+        margin: 7px 0 0;
+        font-size: 12px;
+    }
+
+    /* Avoid sticky hover effects on touch screens */
+    .card:hover {
+        transform: none;
+    }
+
+    .card:hover .poster img {
+        transform: none;
+    }
+
+    .footer {
+        margin-top: 30px;
+        padding: 0 12px;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+}
+
+/* Extra-small portrait phones */
+@media screen and (max-width: 420px) {
+
+    .block-container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .hero-title {
+        font-size: 2.35rem;
+    }
+
+    .hero-icon {
+        font-size: 1.9rem;
+    }
+
+    .banner {
+        height: 160px;
+    }
+
+    .banner-overlay {
+        padding: 16px;
+    }
+
+    .banner-title {
+        font-size: 22px;
+    }
+
+    .card {
+        grid-template-columns: 92px minmax(0, 1fr);
+        column-gap: 12px;
+        padding: 9px;
+    }
+
+    .poster,
+    .poster-ph {
+        width: 92px;
+        max-width: 92px;
+    }
+
+    .m-title {
+        margin-top: 11px;
+        margin-bottom: 10px;
+        font-size: 15px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
