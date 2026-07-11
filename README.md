@@ -30,7 +30,6 @@
   <img src="demo.png" alt="UpNext application demo" width="100%" />
 </p>
 
-> Add your app screenshot to the repository root and name it **`demo.png`**. GitHub will display it here automatically.
 
 ## About UpNext
 
@@ -203,8 +202,7 @@ Movie posters and backdrop images are provided by [The Movie Database (TMDB)](ht
 ## Author
 
 **Mehakpreet Singh**  
-Building projects while learning machine learning, NLP, and practical deployment.
-
+Building projects while learning machine learning.
 ---
 
 <p align="center">
