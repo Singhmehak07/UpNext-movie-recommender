@@ -21,7 +21,6 @@
   <a href="#-run-locally">Run locally</a>
 </p>
 
-> **Before publishing:** replace `https://YOUR-APP-NAME.streamlit.app` with your real Streamlit URL.
 
 ---
 
