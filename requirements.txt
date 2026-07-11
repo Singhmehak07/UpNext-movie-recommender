@@ -1,0 +1,7 @@
+streamlit
+streamlit-searchbox
+pandas
+scikit-learn
+scipy
+requests
+pyarrow
