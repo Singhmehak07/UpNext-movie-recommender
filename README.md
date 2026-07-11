@@ -72,7 +72,7 @@ final_score = (cosine_similarity × 0.90) + (normalized_rating × 0.10)
 
 The model is intentionally weighted toward relevance: similarity contributes **90%** of the final score, while rating contributes **10%** as a small quality signal.
 
-The match bars shown in the interface are relative to the highest-ranked recommendation: the first result is displayed as 100%, and the remaining results are scaled against its final score. They represent metadata alignment—not a guaranteed enjoyment probability.
+The match bars are relative to the highest-ranked recommendation. The first result is displayed as 100%, and the remaining results are scaled against its final blended score. These values represent relative metadata alignment, not the probability that a user will enjoy a movie.
 
 ## Tech stack
 
@@ -91,14 +91,14 @@ The match bars shown in the interface are relative to the highest-ranked recomme
 ```text
 NextWatch-movie-recommender/
 ├── assets/
-│   └── upnext-banner.svg   # animated README banner
-├── app.py                  # Streamlit application
-├── movies.pkl              # cleaned movie metadata
-├── vectors.npz             # precomputed sparse TF-IDF matrix
-├── requirements.txt        # Python dependencies
-├── README.md               # project documentation
-├── demo.png                # app screenshot you will add
-└── .gitignore              # files excluded from Git
+│   └── upnext-banner.svg
+├── app.py
+├── movies.pkl
+├── vectors.npz
+├── requirements.txt
+├── README.md
+├── demo.png
+└── .gitignore
 ```
 
 ## Run locally

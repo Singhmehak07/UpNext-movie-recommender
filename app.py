@@ -1,11 +1,13 @@
 import os
 import urllib.parse
 from html import escape
+from concurrent.futures import ThreadPoolExecutor
 import streamlit as st
 import pandas as pd
 import scipy.sparse
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
+from streamlit_searchbox import st_searchbox
 
 # 1. Page configuration with consistent branding
 st.set_page_config(page_title="UpNext", page_icon="🍿", layout="wide")
@@ -22,7 +24,7 @@ st.markdown("""
 <style>
 .stApp { background:#141414; }
 
-/* hide Streamlit platform controls */
+/* Hide Streamlit platform controls */
 header[data-testid="stHeader"] {
     display: none !important;
     height: 0 !important;
@@ -43,7 +45,7 @@ footer {
     display: none !important;
     visibility: hidden !important;
 }
-/* remove spacing left behind by the hidden header */
+/* Remove space left by the hidden Streamlit header */
 [data-testid="stAppViewContainer"] > .main {
     padding-top: 0 !important;
 }
@@ -139,53 +141,38 @@ def validate_image_url(url):
     except Exception:
         return None
 
-# Load dataset securely with fallbacks
+# Load dataset securely from actual committed artifacts
 @st.cache_data
 def load_data():
-    parquet_path = "movies.parquet"
-    pkl_path = "movies.pkl"
+    movies_path = "movies.pkl"
     vectors_path = "vectors.npz"
-    
-    # 1. Verify existence of the sparse vectors file
+    if not os.path.exists(movies_path):
+        raise FileNotFoundError(
+            f"Required movie database '{movies_path}' is missing."
+        )
     if not os.path.exists(vectors_path):
-        raise FileNotFoundError(f"Required sparse vectors matrix file '{vectors_path}' is missing.")
-        
-    movies_df = None
-    
-    # 2. Prefer loading from Parquet format (safe and performant)
-    if os.path.exists(parquet_path):
-        try:
-            movies_df = pd.read_parquet(parquet_path)
-        except Exception:
-            # Fallback to pickle if parquet is corrupted
-            pass
-            
-    # 3. Fallback to PKL format
-    if movies_df is None:
-        if not os.path.exists(pkl_path):
-            raise FileNotFoundError(
-                f"Missing both data files: '{parquet_path}' and '{pkl_path}'. Please run the migration script."
-            )
-        try:
-            # SECURITY WARNING: Pickle files should only be loaded from trusted sources!
-            # The app falls back to movies.pkl if movies.parquet is not generated.
-            movies_df = pd.read_pickle(pkl_path)
-        except Exception as e:
-            raise IOError(f"Failed to load movie database from '{pkl_path}'. The file may be corrupted.") from e
-            
-    # 4. Load the vector representation file
+        raise FileNotFoundError(
+            f"Required sparse vectors file '{vectors_path}' is missing."
+        )
+    try:
+        # SECURITY WARNING: Pickle files should only be loaded from trusted sources!
+        movies_df = pd.read_pickle(movies_path)
+    except Exception as exc:
+        raise IOError(
+            f"Failed to load '{movies_path}'."
+        ) from exc
     try:
         vectors = scipy.sparse.load_npz(vectors_path)
-    except Exception as e:
-        raise IOError(f"Failed to load vectors from '{vectors_path}'. The file may be corrupted.") from e
-        
-    # 5. Verify shapes match
+    except Exception as exc:
+        raise IOError(
+            f"Failed to load '{vectors_path}'."
+        ) from exc
     if len(movies_df) != vectors.shape[0]:
         raise ValueError(
-            f"Shape mismatch: movies database has {len(movies_df)} records, "
-            f"but vectors matrix has {vectors.shape[0]} rows."
+            f"Shape mismatch: movies database has "
+            f"{len(movies_df)} rows, but the vector matrix has "
+            f"{vectors.shape[0]} rows."
         )
-        
     return movies_df, vectors
 
 # Attempt loading the files and display error if files are missing/damaged
@@ -198,7 +185,33 @@ try:
     data_loaded = True
 except Exception as e:
     st.error(f"⚠️ **Data Initialization Error:** {str(e)}")
-    st.info("Please verify that all project data files (`movies.pkl`/`movies.parquet` and `vectors.npz`) are present in the repository root directory.")
+    st.info("Please verify that all project data files (`movies.pkl` and `vectors.npz`) are present in the repository root directory.")
+
+# Cached, deduplicated, sorted list of movie titles
+@st.cache_data
+def get_all_titles(movie_titles):
+    return sorted(set(movie_titles))
+
+if data_loaded:
+    TITLES = get_all_titles(tuple(movies["title"].dropna().tolist()))
+
+# Live-search callback for streamlit-searchbox
+def search_titles(search_term):
+    if not search_term:
+        return []
+    query = search_term.strip().lower()
+    if not query:
+        return []
+    starts_with = [
+        title for title in TITLES
+        if title.lower().startswith(query)
+    ]
+    contains = [
+        title for title in TITLES
+        if query in title.lower()
+        and not title.lower().startswith(query)
+    ]
+    return (starts_with + contains)[:50]
 
 # Caching searches to TMDB API to save rate limits and speed up responses
 @st.cache_data(show_spinner=False)
@@ -348,12 +361,10 @@ if data_loaded and not TMDB_API_KEY:
 
 # Only render search box if database loaded successfully
 if data_loaded:
-    choice = st.selectbox(
-        "Pick a movie you like",
-        options=sorted(movies["title"].tolist()),
-        index=None,
-        placeholder="Type a movie name...",
-        label_visibility="collapsed",
+    choice = st_searchbox(
+        search_titles,
+        placeholder="Search a movie...",
+        key="movie_search",
     )
     go = st.button("✨ Recommend", type="primary")
     
@@ -363,10 +374,27 @@ if data_loaded:
         if not recs.empty:
             choice_year = get_movie_year(choice)
             
-            # Fetch backdrop for the selected movie
-            backdrop = fetch_backdrop(choice, choice_year)
-            valid_backdrop = validate_image_url(backdrop)
+            # Fetch backdrop and posters in parallel
+            recommendation_rows = list(recs.iterrows())
             
+            def fetch_recommendation_poster(row):
+                release_year = row.get("release_year")
+                return fetch_poster(row["title"], release_year)
+                
+            with ThreadPoolExecutor(max_workers=6) as executor:
+                backdrop_future = executor.submit(
+                    fetch_backdrop,
+                    choice,
+                    choice_year,
+                )
+                poster_futures = [
+                    executor.submit(fetch_recommendation_poster, row)
+                    for _, row in recommendation_rows
+                ]
+                backdrop = backdrop_future.result()
+                posters = [future.result() for future in poster_futures]
+            
+            valid_backdrop = validate_image_url(backdrop)
             bg_css = f"background-image:url('{valid_backdrop}');" if valid_backdrop else ""
             escaped_choice = safe_html_text(choice)
             
@@ -383,10 +411,18 @@ if data_loaded:
             
             medals = {1: "🥇", 2: "🥈", 3: "🥉"}
             cards = ""
+            top_score = float(recs["score"].iloc[0])
             
-            for rank, (_, row) in enumerate(recs.iterrows(), start=1):
-                # Calculate displayed similarity score using ONLY cosine-similarity
-                similarity_percentage = max(0, min(100, round(row["similarity"] * 100)))
+            for rank, ((_, row), poster_url) in enumerate(
+                zip(recommendation_rows, posters),
+                start=1,
+            ):
+                # Calculate match percentage relative to the highest recommendation score
+                if top_score > 0:
+                    match_percentage = int((float(row["score"]) / top_score) * 100)
+                else:
+                    match_percentage = 0
+                match_percentage = max(0, min(100, match_percentage))
                 
                 rank_label = medals.get(rank, f"#{rank}")
                 escaped_rank_label = safe_html_text(rank_label)
@@ -396,11 +432,8 @@ if data_loaded:
                 escaped_rating = safe_html_text(f"★ {rating_str}")
                 
                 escaped_title = safe_html_text(row["title"])
-                escaped_similarity = safe_html_text(f"Similarity score: {similarity_percentage}%")
+                escaped_similarity = safe_html_text(f"{match_percentage}% match")
                 
-                # Fetch poster using release year information if present
-                rec_year = row.get("release_year")
-                poster_url = fetch_poster(row["title"], rec_year)
                 valid_poster = validate_image_url(poster_url)
                 
                 poster_html = (
@@ -414,7 +447,7 @@ if data_loaded:
                     f'<div class="card-head"><span class="rank">{escaped_rank_label}</span>'
                     f'<span class="badge">{escaped_rating}</span></div>'
                     f'<div class="m-title">{escaped_title}</div>'
-                    f'<div class="bar"><div class="fill" style="width:{similarity_percentage}%"></div></div>'
+                    f'<div class="bar"><div class="fill" style="width:{match_percentage}%"></div></div>'
                     f'<span class="pct">{escaped_similarity}</span>'
                     f'</div>'
                 )
