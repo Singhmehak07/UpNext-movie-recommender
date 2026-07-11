@@ -118,10 +118,15 @@ footer {
 .footer { text-align:center; color:rgba(255,255,255,.4); font-size:13px; margin-top:44px; }
 
 /* =========================================================
-   Portrait mobile layout
-   Desktop remains unchanged above this breakpoint.
+   Portrait mobile layout via Container Queries
+   Desktop remains unchanged above this container size.
    ========================================================= */
-@media screen and (max-width: 768px) {
+[data-testid="stMain"] {
+    container-type: inline-size;
+    container-name: upnext-main;
+}
+
+@container upnext-main (max-width: 768px) {
 
     /* Natural vertical scrolling with no sideways overflow */
     html,
@@ -175,12 +180,12 @@ footer {
     }
 
     /* Full-width touch-friendly button */
-    div.stButton {
+    div.stButton,
+    div.stButton > button {
         width: 100% !important;
     }
 
     div.stButton > button {
-        width: 100% !important;
         min-height: 46px !important;
         border-radius: 10px !important;
         font-size: 15px !important;
@@ -222,24 +227,24 @@ footer {
 
     /* Vertical recommendation feed */
     .grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 14px;
-        width: 100%;
-        max-width: 100%;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     /* Poster-left compact mobile card */
     .card {
-        display: grid;
-        grid-template-columns: 105px minmax(0, 1fr);
-        grid-template-rows: auto auto auto auto;
+        display: grid !important;
+        grid-template-columns: 105px minmax(0, 1fr) !important;
+        grid-template-rows: auto auto auto auto !important;
         column-gap: 14px;
         row-gap: 0;
         align-items: start;
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         padding: 10px;
         border-radius: 12px;
         box-sizing: border-box;
@@ -333,7 +338,7 @@ footer {
 }
 
 /* Extra-small portrait phones */
-@media screen and (max-width: 420px) {
+@container upnext-main (max-width: 420px) {
 
     .block-container {
         padding-left: 0.75rem !important;
@@ -361,7 +366,7 @@ footer {
     }
 
     .card {
-        grid-template-columns: 92px minmax(0, 1fr);
+        grid-template-columns: 92px minmax(0, 1fr) !important;
         column-gap: 12px;
         padding: 9px;
     }
